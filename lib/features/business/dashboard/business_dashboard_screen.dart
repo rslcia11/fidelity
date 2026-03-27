@@ -123,7 +123,9 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           _business = businessResponse;
           _customers = List<Map<String, dynamic>>.from(customersResponse);
           _pendingScans = List<Map<String, dynamic>>.from(pendingScansResponse);
-          _pendingRewards = List<Map<String, dynamic>>.from(pendingRewardsResponse);
+          _pendingRewards = List<Map<String, dynamic>>.from(
+            pendingRewardsResponse,
+          );
           _stats = statsResponse;
           _isLoading = false;
         });
@@ -286,6 +288,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           'business_id': businessId,
           'loyalty_card_id': loyaltyCardId,
           'points_used': pointsRequired,
+          'description': business?['reward_description'] ?? 'Premio',
           'earned_at': DateTime.now().toIso8601String(),
           'status': 'pending',
         });
@@ -378,9 +381,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
             child: const Text('Canjear'),
           ),
         ],
@@ -452,19 +453,31 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                     color: AppTheme.accentPurple.withOpacity(0.05),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.storefront_rounded, size: 80, color: AppTheme.accentPurple),
+                  child: const Icon(
+                    Icons.storefront_rounded,
+                    size: 80,
+                    color: AppTheme.accentPurple,
+                  ),
                 ),
                 const SizedBox(height: 40),
                 const Text(
                   'SIN NEGOCIO',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 2),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 const Text(
                   'Registra tu local para empezar a fidelizar a tus clientes con puntos y premios.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.black38),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black38,
+                  ),
                 ),
                 const SizedBox(height: 48),
                 SizedBox(
@@ -472,7 +485,9 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                   child: ElevatedButton(
                     onPressed: () async {
                       await Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const CreateBusinessScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const CreateBusinessScreen(),
+                        ),
                       );
                       _loadBusinessData();
                     },
@@ -533,7 +548,11 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                             ? NetworkImage(_business!['logo_url'])
                             : null,
                         child: _business!['logo_url'] == null
-                            ? const Icon(Icons.store, color: Colors.black, size: 28)
+                            ? const Icon(
+                                Icons.store,
+                                color: Colors.black,
+                                size: 28,
+                              )
                             : null,
                       ),
                     ),
@@ -541,41 +560,53 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                   Positioned(
                     right: 4,
                     bottom: 4,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppTheme.accentPurple, AppTheme.accentPink],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.accentPurple.withOpacity(0.4),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.edit_rounded,
-                        size: 14,
-                        color: Colors.white,
-                      ),
-                    )
-                    .animate(onPlay: (controller) => controller.repeat(reverse: true))
-                    .scale(
-                      duration: const Duration(seconds: 1),
-                      begin: const Offset(1, 1),
-                      end: const Offset(1.15, 1.15),
-                      curve: Curves.easeInOut,
-                    )
-                    .shimmer(
-                      duration: const Duration(seconds: 3),
-                      color: Colors.white.withOpacity(0.5),
-                    ),
+                    child:
+                        Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    AppTheme.accentPurple,
+                                    AppTheme.accentPink,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.accentPurple.withOpacity(
+                                      0.4,
+                                    ),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.edit_rounded,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                            )
+                            .animate(
+                              onPlay: (controller) =>
+                                  controller.repeat(reverse: true),
+                            )
+                            .scale(
+                              duration: const Duration(seconds: 1),
+                              begin: const Offset(1, 1),
+                              end: const Offset(1.15, 1.15),
+                              curve: Curves.easeInOut,
+                            )
+                            .shimmer(
+                              duration: const Duration(seconds: 3),
+                              color: Colors.white.withOpacity(0.5),
+                            ),
                   ),
                 ],
               ),
@@ -587,23 +618,38 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
               if (_ownerDisplayName.isNotEmpty)
                 Text(
                   'Hola, $_ownerDisplayName 👋',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.black45),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black45,
+                  ),
                 ),
               Text(
                 _business!['name'].toString().toUpperCase(),
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 0.5),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                  letterSpacing: 0.5,
+                ),
               ),
               Row(
                 children: [
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: const BoxDecoration(color: AppTheme.accentGreen, shape: BoxShape.circle),
+                    decoration: const BoxDecoration(
+                      color: AppTheme.accentGreen,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     '${_customers.length} CLIENTES ACTIVOS',
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.black45),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black45,
+                    ),
                   ),
                 ],
               ),
@@ -626,7 +672,11 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           ],
           bottom: TabBar(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.8),
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 11,
+              letterSpacing: 0.8,
+            ),
             indicatorWeight: 4,
             indicatorSize: TabBarIndicatorSize.label,
             indicatorColor: Colors.black,
@@ -643,10 +693,17 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                       const SizedBox(width: 4),
                       Container(
                         padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(color: AppTheme.accentPink, shape: BoxShape.circle),
+                        decoration: const BoxDecoration(
+                          color: AppTheme.accentPink,
+                          shape: BoxShape.circle,
+                        ),
                         child: Text(
                           '${_pendingScans.length}',
-                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
                     ],
@@ -662,10 +719,17 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                       const SizedBox(width: 4),
                       Container(
                         padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(color: AppTheme.accentPurple, shape: BoxShape.circle),
+                        decoration: const BoxDecoration(
+                          color: AppTheme.accentPurple,
+                          shape: BoxShape.circle,
+                        ),
                         child: Text(
                           '${_pendingRewards.length}',
-                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
                     ],
@@ -698,14 +762,22 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           child: TextField(
             decoration: InputDecoration(
               hintText: 'BUSCAR CLIENTE...',
-              prefixIcon: const Icon(Icons.search_rounded, color: Colors.black, size: 24),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: Colors.black,
+                size: 24,
+              ),
               filled: true,
               fillColor: Colors.black.withOpacity(0.04),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(24),
                 borderSide: BorderSide.none,
               ),
-              hintStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1),
+              hintStyle: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+                letterSpacing: 1,
+              ),
             ),
             onChanged: (value) => setState(() => _searchQuery = value),
           ),
@@ -716,106 +788,189 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.people_outline_rounded, size: 64, color: Colors.black.withOpacity(0.1)),
+                      Icon(
+                        Icons.people_outline_rounded,
+                        size: 64,
+                        color: Colors.black.withOpacity(0.1),
+                      ),
                       const SizedBox(height: 16),
                       Text(
-                        _searchQuery.isEmpty ? 'NO HAY CLIENTES AÚN' : 'SIN RESULTADOS',
-                        style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.black26, letterSpacing: 1),
+                        _searchQuery.isEmpty
+                            ? 'NO HAY CLIENTES AÚN'
+                            : 'SIN RESULTADOS',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black26,
+                          letterSpacing: 1,
+                        ),
                       ),
                     ],
                   ),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   itemCount: _filteredCustomers.length,
                   itemBuilder: (context, index) {
                     final card = _filteredCustomers[index];
                     final profile = card['profiles'];
-                    final accentColor = [AppTheme.accentPurple, AppTheme.accentPink, AppTheme.accentYellow, AppTheme.accentGreen][index % 4];
+                    final accentColor = [
+                      AppTheme.accentPurple,
+                      AppTheme.accentPink,
+                      AppTheme.accentYellow,
+                      AppTheme.accentGreen,
+                    ][index % 4];
 
                     return Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(32),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-                        ],
-                        border: Border.all(color: Colors.black.withOpacity(0.04)),
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 28,
-                            backgroundColor: accentColor.withOpacity(0.1),
-                            child: Text(
-                              (profile?['full_name']?[0] ?? '?').toUpperCase(),
-                              style: TextStyle(fontWeight: FontWeight.w900, color: accentColor, fontSize: 20),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(32),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.02),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                            border: Border.all(
+                              color: Colors.black.withOpacity(0.04),
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  (profile?['full_name'] ?? 'USUARIO').toUpperCase(),
-                                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.5),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 28,
+                                backgroundColor: accentColor.withOpacity(0.1),
+                                child: Text(
+                                  (profile?['full_name']?[0] ?? '?')
+                                      .toUpperCase(),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    color: accentColor,
+                                    fontSize: 20,
+                                  ),
                                 ),
-                                const SizedBox(height: 4),
-                                Row(
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      '${card['total_points_lifetime'] ?? 0} ESCANEOS',
-                                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.black45),
+                                      (profile?['full_name'] ?? 'USUARIO')
+                                          .toUpperCase(),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 14,
+                                        letterSpacing: 0.5,
+                                      ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Container(width: 4, height: 4, decoration: const BoxDecoration(color: Colors.black12, shape: BoxShape.circle)),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '${card['rewards_claimed'] ?? 0} PREMIOS',
-                                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.black45),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '${card['total_points_lifetime'] ?? 0} ESCANEOS',
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.black45,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          width: 4,
+                                          height: 4,
+                                          decoration: const BoxDecoration(
+                                            color: Colors.black12,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          '${card['rewards_claimed'] ?? 0} PREMIOS',
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.black45,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_horiz_rounded, color: Colors.black45),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                            onSelected: (value) {
-                              if (value == 'add_points') _showAddPointsDialog(card);
-                              else if (value == 'redeem') _redeemReward(card['user_id'], card['id']);
-                            },
-                            itemBuilder: (context) => [
-                              PopupMenuItem(
-                                value: 'add_points',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.add_circle_outline_rounded, size: 20, color: accentColor),
-                                    const SizedBox(width: 12),
-                                    const Text('PUNTOS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
                                   ],
                                 ),
                               ),
-                              if ((card['current_points'] ?? 0) >= _business!['points_required'])
-                                const PopupMenuItem(
-                                  value: 'redeem',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.card_giftcard_rounded, size: 20, color: AppTheme.accentGreen),
-                                      const SizedBox(width: 12),
-                                      const Text('CANJEAR', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
-                                    ],
-                                  ),
+                              PopupMenuButton<String>(
+                                icon: const Icon(
+                                  Icons.more_horiz_rounded,
+                                  color: Colors.black45,
                                 ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                onSelected: (value) {
+                                  if (value == 'add_points')
+                                    _showAddPointsDialog(card);
+                                  else if (value == 'redeem')
+                                    _redeemReward(card['user_id'], card['id']);
+                                },
+                                itemBuilder: (context) => [
+                                  PopupMenuItem(
+                                    value: 'add_points',
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.add_circle_outline_rounded,
+                                          size: 20,
+                                          color: accentColor,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Text(
+                                          'PUNTOS',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if ((card['current_points'] ?? 0) >=
+                                      _business!['points_required'])
+                                    const PopupMenuItem(
+                                      value: 'redeem',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.card_giftcard_rounded,
+                                            size: 20,
+                                            color: AppTheme.accentGreen,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          const Text(
+                                            'CANJEAR',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w900,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ],
                           ),
-                        ],
-                      ),
-                    ).animate(delay: AppTheme.animDelayStaggered(index)).fadeIn(duration: AppTheme.animDurationStandard).slideY(begin: AppTheme.animSlideYBegin, curve: AppTheme.animCurveStandard);
+                        )
+                        .animate(delay: AppTheme.animDelayStaggered(index))
+                        .fadeIn(duration: AppTheme.animDurationStandard)
+                        .slideY(
+                          begin: AppTheme.animSlideYBegin,
+                          curve: AppTheme.animCurveStandard,
+                        );
                   },
                 ),
         ),
@@ -831,17 +986,31 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(color: AppTheme.accentGreen.withOpacity(0.05), shape: BoxShape.circle),
-              child: const Icon(Icons.check_circle_outline_rounded, size: 64, color: AppTheme.accentGreen),
+              decoration: BoxDecoration(
+                color: AppTheme.accentGreen.withOpacity(0.05),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_circle_outline_rounded,
+                size: 64,
+                color: AppTheme.accentGreen,
+              ),
             ),
             const SizedBox(height: 24),
             const Text(
               '¡TODO AL DÍA!',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1),
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+                letterSpacing: 1,
+              ),
             ),
             const Text(
               'No hay escaneos por aprobar.',
-              style: TextStyle(fontWeight: FontWeight.w700, color: Colors.black26),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Colors.black26,
+              ),
             ),
           ],
         ),
@@ -854,72 +1023,109 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
         final scan = _pendingScans[index];
         final profile = scan['profiles'];
         return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-            ],
-            border: Border.all(color: Colors.black.withOpacity(0.04)),
-          ),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: Colors.black.withOpacity(0.04),
-                child: Text(
-                  (profile?['full_name']?[0] ?? '?').toUpperCase(),
-                  style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.black),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      (profile?['full_name'] ?? 'USUARIO').toUpperCase(),
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      EcuadorDateUtils.formatEcuadorTime(scan['scanned_at']).toUpperCase(),
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.black38),
-                    ),
-                  ],
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded, color: AppTheme.accentPink),
-                    onPressed: () => _rejectScan(scan['id']),
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    icon: const Icon(Icons.check_circle_rounded, color: AppTheme.accentGreen),
-                    onPressed: () => _approveScan(scan['id'], scan['loyalty_card_id']),
+                ],
+                border: Border.all(color: Colors.black.withOpacity(0.04)),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: Colors.black.withOpacity(0.04),
+                    child: Text(
+                      (profile?['full_name']?[0] ?? '?').toUpperCase(),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          (profile?['full_name'] ?? 'USUARIO').toUpperCase(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          EcuadorDateUtils.formatEcuadorTime(
+                            scan['scanned_at'],
+                          ).toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black38,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: AppTheme.accentPink,
+                        ),
+                        onPressed: () => _rejectScan(scan['id']),
+                      ),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.check_circle_rounded,
+                          color: AppTheme.accentGreen,
+                        ),
+                        onPressed: () =>
+                            _approveScan(scan['id'], scan['loyalty_card_id']),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-        ).animate(delay: AppTheme.animDelayStaggered(index)).fadeIn(duration: AppTheme.animDurationStandard).slideY(begin: AppTheme.animSlideYBegin, curve: AppTheme.animCurveStandard);
+            )
+            .animate(delay: AppTheme.animDelayStaggered(index))
+            .fadeIn(duration: AppTheme.animDurationStandard)
+            .slideY(
+              begin: AppTheme.animSlideYBegin,
+              curve: AppTheme.animCurveStandard,
+            );
       },
     );
   }
 
   Widget _buildStatisticsTab() {
-    final totalScans = _customers.fold<int>(0, (sum, card) => sum + ((card['total_points_lifetime'] ?? 0) as int));
-    final totalRewards = _customers.fold<int>(0, (sum, card) => sum + ((card['rewards_claimed'] ?? 0) as int));
+    final totalScans = _customers.fold<int>(
+      0,
+      (sum, card) => sum + ((card['total_points_lifetime'] ?? 0) as int),
+    );
+    final totalRewards = _customers.fold<int>(
+      0,
+      (sum, card) => sum + ((card['rewards_claimed'] ?? 0) as int),
+    );
 
     final createdAtString = _business!['created_at'] ?? '';
     final createdAt = EcuadorDateUtils.toEcuadorTime(createdAtString);
     final daysLive = EcuadorDateUtils.nowEcuador().difference(createdAt).inDays;
-    final formattedDate = "${createdAt.day.toString().padLeft(2, '0')}/${createdAt.month.toString().padLeft(2, '0')}/${createdAt.year}";
+    final formattedDate =
+        "${createdAt.day.toString().padLeft(2, '0')}/${createdAt.month.toString().padLeft(2, '0')}/${createdAt.year}";
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -938,25 +1144,63 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
               children: [
                 const Text(
                   'INFORMACIÓN DE CAMPAÑA',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Colors.white, letterSpacing: 1),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    color: Colors.white,
+                    letterSpacing: 1,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('INICIO', style: TextStyle(color: Colors.white54, fontWeight: FontWeight.w800, fontSize: 10)),
-                    Text(formattedDate, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+                    const Text(
+                      'INICIO',
+                      style: TextStyle(
+                        color: Colors.white54,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                      ),
+                    ),
+                    Text(
+                      formattedDate,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('DÍAS ACTIVO', style: TextStyle(color: Colors.white54, fontWeight: FontWeight.w800, fontSize: 10)),
+                    const Text(
+                      'DÍAS ACTIVO',
+                      style: TextStyle(
+                        color: Colors.white54,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                      ),
+                    ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: AppTheme.accentGreen, borderRadius: BorderRadius.circular(8)),
-                      child: Text('$daysLive DÍAS', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 10)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.accentGreen,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '$daysLive DÍAS',
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 10,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -965,40 +1209,64 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           ),
           const SizedBox(height: 24),
           _StatCard(
-            title: 'CLIENTES',
-            value: '${_customers.length}',
-            icon: Icons.people_rounded,
-            color: AppTheme.accentPurple,
-            onTap: _showCustomersModal,
-            subtitle: 'PERSONA ÚNICAS VISITARON',
-          ).animate().fadeIn(duration: AppTheme.animDurationStandard).slideY(begin: AppTheme.animSlideYBegin, curve: AppTheme.animCurveStandard),
+                title: 'CLIENTES',
+                value: '${_customers.length}',
+                icon: Icons.people_rounded,
+                color: AppTheme.accentPurple,
+                onTap: _showCustomersModal,
+                subtitle: 'PERSONA ÚNICAS VISITARON',
+              )
+              .animate()
+              .fadeIn(duration: AppTheme.animDurationStandard)
+              .slideY(
+                begin: AppTheme.animSlideYBegin,
+                curve: AppTheme.animCurveStandard,
+              ),
           const SizedBox(height: 16),
           _StatCard(
-            title: 'ESCANEOS',
-            value: '$totalScans',
-            icon: Icons.qr_code_scanner_rounded,
-            color: AppTheme.accentYellow,
-            onTap: _showTopScansModal,
-            subtitle: 'VISITAS TOTALES REGISTRADAS',
-          ).animate(delay: 100.ms).fadeIn(duration: AppTheme.animDurationStandard).slideY(begin: AppTheme.animSlideYBegin, curve: AppTheme.animCurveStandard),
+                title: 'ESCANEOS',
+                value: '$totalScans',
+                icon: Icons.qr_code_scanner_rounded,
+                color: AppTheme.accentYellow,
+                onTap: _showTopScansModal,
+                subtitle: 'VISITAS TOTALES REGISTRADAS',
+              )
+              .animate(delay: 100.ms)
+              .fadeIn(duration: AppTheme.animDurationStandard)
+              .slideY(
+                begin: AppTheme.animSlideYBegin,
+                curve: AppTheme.animCurveStandard,
+              ),
           const SizedBox(height: 16),
           _StatCard(
-            title: 'PREMIOS',
-            value: '$totalRewards',
-            icon: Icons.card_giftcard_rounded,
-            color: AppTheme.accentPink,
-            onTap: _showRewardsModal,
-            subtitle: 'RECOMPENSAS CANJEADAS',
-          ).animate(delay: 200.ms).fadeIn(duration: AppTheme.animDurationStandard).slideY(begin: AppTheme.animSlideYBegin, curve: AppTheme.animCurveStandard),
+                title: 'PREMIOS',
+                value: '$totalRewards',
+                icon: Icons.card_giftcard_rounded,
+                color: AppTheme.accentPink,
+                onTap: _showRewardsModal,
+                subtitle: 'RECOMPENSAS CANJEADAS',
+              )
+              .animate(delay: 200.ms)
+              .fadeIn(duration: AppTheme.animDurationStandard)
+              .slideY(
+                begin: AppTheme.animSlideYBegin,
+                curve: AppTheme.animCurveStandard,
+              ),
           const SizedBox(height: 16),
           _StatCard(
-            title: 'REQUISITO',
-            value: '${_business!['points_required']}',
-            icon: Icons.star_rounded,
-            color: AppTheme.accentGreen,
-            onTap: _showEditRewardDialog,
-            subtitle: 'PUNTOS PARA UN PREMIO',
-          ).animate(delay: 300.ms).fadeIn(duration: AppTheme.animDurationStandard).slideY(begin: AppTheme.animSlideYBegin, curve: AppTheme.animCurveStandard),
+                title: 'REQUISITO',
+                value: '${_business!['points_required']}',
+                icon: Icons.star_rounded,
+                color: AppTheme.accentGreen,
+                onTap: _showEditRewardDialog,
+                subtitle: 'PUNTOS PARA UN PREMIO',
+              )
+              .animate(delay: 300.ms)
+              .fadeIn(duration: AppTheme.animDurationStandard)
+              .slideY(
+                begin: AppTheme.animSlideYBegin,
+                curve: AppTheme.animCurveStandard,
+              ),
         ],
       ),
     );
@@ -1114,20 +1382,34 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                   Container(
                     height: 5,
                     width: 40,
-                    decoration: BoxDecoration(color: Colors.black.withOpacity(0.05), borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   ListTile(
                     title: Text(
                       title.toUpperCase(),
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 0.5),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                     subtitle: Text(
                       '${items.length} REGISTROS',
-                      style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.black26, fontSize: 10),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black26,
+                        fontSize: 10,
+                      ),
                     ),
                     trailing: IconButton(
-                      icon: const Icon(Icons.close_rounded, color: Colors.black),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.black,
+                      ),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
@@ -1138,20 +1420,34 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.inbox_rounded, size: 48, color: Colors.black.withOpacity(0.05)),
+                                Icon(
+                                  Icons.inbox_rounded,
+                                  size: 48,
+                                  color: Colors.black.withOpacity(0.05),
+                                ),
                                 const SizedBox(height: 16),
-                                const Text('NO HAY REGISTROS', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.black26)),
+                                const Text(
+                                  'NO HAY REGISTROS',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.black26,
+                                  ),
+                                ),
                               ],
                             ),
                           )
                         : ListView.builder(
                             controller: controller,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             itemCount: items.length,
                             itemBuilder: (context, index) {
                               final item = items[index];
                               final profile = item['profiles'];
-                              final name = (profile?['full_name'] ?? 'USUARIO').toUpperCase();
+                              final name = (profile?['full_name'] ?? 'USUARIO')
+                                  .toUpperCase();
 
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 8),
@@ -1164,13 +1460,26 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                                     backgroundColor: color.withOpacity(0.1),
                                     child: Text(
                                       name.isNotEmpty ? name[0] : '?',
-                                      style: TextStyle(color: color, fontWeight: FontWeight.w900),
+                                      style: TextStyle(
+                                        color: color,
+                                        fontWeight: FontWeight.w900,
+                                      ),
                                     ),
                                   ),
-                                  title: Text(name, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                                  title: Text(
+                                    name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 13,
+                                    ),
+                                  ),
                                   subtitle: Text(
                                     subtitleBuilder(item).toUpperCase(),
-                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 9, color: Colors.black38),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 9,
+                                      color: Colors.black38,
+                                    ),
                                   ),
                                   trailing: trailingBuilder(item),
                                 ),
@@ -1186,7 +1495,8 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
       },
     );
   }
-    void _showAddPointsDialog(Map<String, dynamic> card) {
+
+  void _showAddPointsDialog(Map<String, dynamic> card) {
     final pointsController = TextEditingController();
 
     showDialog(
@@ -1200,7 +1510,11 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           children: [
             Text(
               card['profiles']['full_name'].toString().toUpperCase(),
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.black45),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: Colors.black45,
+              ),
             ),
             const SizedBox(height: 24),
             TextField(
@@ -1230,28 +1544,40 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
   }
 
   void _showEditRewardDialog() {
-    final rewardController = TextEditingController(text: _business!['reward_description'] ?? '');
-    final pointsController = TextEditingController(text: '${_business!['points_required']}');
+    final rewardController = TextEditingController(
+      text: _business!['reward_description'] ?? '',
+    );
+    final pointsController = TextEditingController(
+      text: '${_business!['points_required']}',
+    );
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(48)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(48),
+          ),
           title: const Text('EDITAR PRODUCTO', textAlign: TextAlign.center),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: rewardController,
-                decoration: const InputDecoration(labelText: '¿QUÉ VAS A PREMIAR?', hintText: 'Ej: Un vaso de helado'),
+                decoration: const InputDecoration(
+                  labelText: '¿QUÉ VAS A PREMIAR?',
+                  hintText: 'Ej: Un vaso de helado',
+                ),
               ),
               const SizedBox(height: 24),
               TextField(
                 controller: pointsController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'PUNTOS NECESARIOS', hintText: 'Ej: 3'),
+                decoration: const InputDecoration(
+                  labelText: 'PUNTOS NECESARIOS',
+                  hintText: 'Ej: 3',
+                ),
               ),
             ],
           ),
@@ -1260,10 +1586,17 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
               child: ElevatedButton(
                 onPressed: () async {
                   final newDesc = rewardController.text.trim().toUpperCase();
-                  final newPoints = int.tryParse(pointsController.text.trim()) ?? 10;
+                  final newPoints =
+                      int.tryParse(pointsController.text.trim()) ?? 10;
                   if (newDesc.isEmpty || newPoints < 1) return;
                   try {
-                    await supabase.from('businesses').update({'reward_description': newDesc, 'points_required': newPoints}).eq('id', _business!['id']);
+                    await supabase
+                        .from('businesses')
+                        .update({
+                          'reward_description': newDesc,
+                          'points_required': newPoints,
+                        })
+                        .eq('id', _business!['id']);
                     if (mounted) {
                       Navigator.pop(context);
                       _loadBusinessData();
@@ -1298,27 +1631,59 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(height: 5, width: 40, decoration: BoxDecoration(color: Colors.black.withOpacity(0.05), borderRadius: BorderRadius.circular(10))),
+            Container(
+              height: 5,
+              width: 40,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
             const SizedBox(height: 32),
-            const Text('FOTO DE PERFIL', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1)),
+            const Text(
+              'FOTO DE PERFIL',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+                letterSpacing: 1,
+              ),
+            ),
             const SizedBox(height: 32),
             ListTile(
               leading: Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppTheme.accentPurple.withOpacity(0.1), shape: BoxShape.circle),
-                child: const Icon(Icons.photo_library_rounded, color: AppTheme.accentPurple),
+                decoration: BoxDecoration(
+                  color: AppTheme.accentPurple.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.photo_library_rounded,
+                  color: AppTheme.accentPurple,
+                ),
               ),
-              title: const Text('ELEGIR DE GALERÍA', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+              title: const Text(
+                'ELEGIR DE GALERÍA',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+              ),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
             const SizedBox(height: 8),
             ListTile(
               leading: Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppTheme.accentYellow.withOpacity(0.1), shape: BoxShape.circle),
-                child: const Icon(Icons.camera_alt_rounded, color: AppTheme.accentYellow),
+                decoration: BoxDecoration(
+                  color: AppTheme.accentYellow.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.camera_alt_rounded,
+                  color: AppTheme.accentYellow,
+                ),
               ),
-              title: const Text('TOMAR FOTO', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+              title: const Text(
+                'TOMAR FOTO',
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+              ),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             if (_business!['logo_url'] != null) ...[
@@ -1326,10 +1691,23 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
               ListTile(
                 leading: Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: AppTheme.accentPink.withOpacity(0.1), shape: BoxShape.circle),
-                  child: const Icon(Icons.delete_rounded, color: AppTheme.accentPink),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accentPink.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.delete_rounded,
+                    color: AppTheme.accentPink,
+                  ),
                 ),
-                title: const Text('ELIMINAR FOTO', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppTheme.accentPink)),
+                title: const Text(
+                  'ELIMINAR FOTO',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    color: AppTheme.accentPink,
+                  ),
+                ),
                 onTap: () => Navigator.pop(context, 'delete'),
               ),
             ],
@@ -1523,7 +1901,10 @@ class _StatCard extends StatelessWidget {
                       fontWeight: FontWeight.w900,
                       color: color,
                     ),
-                  ).animate().scale(curve: AppTheme.animCurveElastic, duration: AppTheme.animDurationSlow),
+                  ).animate().scale(
+                    curve: AppTheme.animCurveElastic,
+                    duration: AppTheme.animDurationSlow,
+                  ),
                   if (subtitle != null) ...[
                     const SizedBox(height: 4),
                     Text(

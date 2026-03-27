@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/services/export_service.dart';
+import 'widgets/export_preview_dialog.dart';
 
 class AdminBusinessesScreen extends StatefulWidget {
   const AdminBusinessesScreen({super.key});
@@ -73,6 +75,17 @@ class _AdminBusinessesScreenState extends State<AdminBusinessesScreen> {
     }
   }
 
+  void _showExportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => ExportPreviewDialog(
+        data: _businesses,
+        entity: ExportEntity.businesses,
+        exportService: SupabaseExportService(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -82,6 +95,13 @@ class _AdminBusinessesScreenState extends State<AdminBusinessesScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showExportDialog,
+        icon: const Icon(Icons.download),
+        label: const Text('Exportar'),
+        backgroundColor: AppTheme.accentPurple,
+        foregroundColor: Colors.white,
       ),
       body: _isLoading
           ? const Center(
@@ -126,10 +146,7 @@ class _AdminBusinessesScreenState extends State<AdminBusinessesScreen> {
                                 ? NetworkImage(business['logo_url'])
                                 : null,
                             child: business['logo_url'] == null
-                                ? const Icon(
-                                    Icons.store,
-                                    color: Colors.black,
-                                  )
+                                ? const Icon(Icons.store, color: Colors.black)
                                 : null,
                           ),
                           title: Text(
@@ -193,7 +210,8 @@ class _AdminBusinessesScreenState extends State<AdminBusinessesScreen> {
                                             'Desconocido';
                                         return Chip(
                                           avatar: CircleAvatar(
-                                            backgroundColor: Colors.black.withOpacity(0.04),
+                                            backgroundColor: Colors.black
+                                                .withOpacity(0.04),
                                             child: Text(
                                               clientName[0].toUpperCase(),
                                               style: const TextStyle(
@@ -210,7 +228,8 @@ class _AdminBusinessesScreenState extends State<AdminBusinessesScreen> {
                                               color: Colors.black54,
                                             ),
                                           ),
-                                          backgroundColor: Colors.black.withOpacity(0.04),
+                                          backgroundColor: Colors.black
+                                              .withOpacity(0.04),
                                           side: BorderSide.none,
                                           padding: EdgeInsets.zero,
                                         );

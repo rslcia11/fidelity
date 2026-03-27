@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/date_utils.dart';
+import '../../core/services/export_service.dart';
+import 'widgets/export_preview_dialog.dart';
 
 class AdminUsersScreen extends StatefulWidget {
   const AdminUsersScreen({super.key});
@@ -97,6 +99,17 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     return AppTheme.accentYellow;
   }
 
+  void _showExportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => ExportPreviewDialog(
+        data: _users,
+        entity: ExportEntity.users,
+        exportService: SupabaseExportService(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,7 +118,13 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         title: const Text('Usuarios Registrados'),
         backgroundColor: Colors.white,
         elevation: 0,
-        foregroundColor: Colors.black,
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showExportDialog,
+        icon: const Icon(Icons.download),
+        label: const Text('Exportar'),
+        backgroundColor: AppTheme.accentPurple,
+        foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
@@ -133,12 +152,43 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                     DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedRoleFilter,
-                        icon: const Icon(Icons.people_alt_rounded, color: Colors.black, size: 20),
+                        icon: const Icon(
+                          Icons.people_alt_rounded,
+                          color: Colors.black,
+                          size: 20,
+                        ),
                         alignment: Alignment.centerRight,
                         items: const [
-                          DropdownMenuItem(value: 'all', child: Text('Todos', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
-                          DropdownMenuItem(value: 'business', child: Text('Negocios', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
-                          DropdownMenuItem(value: 'client', child: Text('Clientes', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
+                          DropdownMenuItem(
+                            value: 'all',
+                            child: Text(
+                              'Todos',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'business',
+                            child: Text(
+                              'Negocios',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'client',
+                            child: Text(
+                              'Clientes',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                         ],
                         onChanged: (value) {
                           if (value != null) {
@@ -159,13 +209,46 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                           color: Colors.black,
                         ),
                         items: const [
-                          DropdownMenuItem(value: 'all', child: Text('Todas', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
-                          DropdownMenuItem(value: 'today', child: Text('Hoy', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
+                          DropdownMenuItem(
+                            value: 'all',
+                            child: Text(
+                              'Todas',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'today',
+                            child: Text(
+                              'Hoy',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                           DropdownMenuItem(
                             value: 'week',
-                            child: Text('Esta Sem', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                            child: Text(
+                              'Esta Sem',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
                           ),
-                          DropdownMenuItem(value: 'month', child: Text('Este Mes', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
+                          DropdownMenuItem(
+                            value: 'month',
+                            child: Text(
+                              'Este Mes',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                         ],
                         onChanged: (value) {
                           if (value != null) {
@@ -206,83 +289,89 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         final roleColor = _getRoleColor(role);
 
                         return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 0,
-                          color: Colors.white,
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(16),
-                            leading: CircleAvatar(
-                              backgroundColor: roleColor.withOpacity(0.1),
-                              child: Icon(
-                                role == 'business'
-                                    ? Icons.store
-                                    : (role == 'admin'
-                                          ? Icons.security
-                                          : Icons.person),
-                                color: roleColor,
+                              margin: const EdgeInsets.only(bottom: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
-                            ),
-                            title: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    user['full_name'] ?? 'Sin nombre',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
+                              elevation: 0,
+                              color: Colors.white,
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.all(16),
+                                leading: CircleAvatar(
+                                  backgroundColor: roleColor.withOpacity(0.1),
+                                  child: Icon(
+                                    role == 'business'
+                                        ? Icons.store
+                                        : (role == 'admin'
+                                              ? Icons.security
+                                              : Icons.person),
+                                    color: roleColor,
+                                  ),
+                                ),
+                                title: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        user['full_name'] ?? 'Sin nombre',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: roleColor.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    _getRoleLabel(role),
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: roleColor,
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: roleColor.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        _getRoleLabel(role),
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: roleColor,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 4),
-                                Text(
-                                  user['email'] ?? 'Sin correo',
-                                  style: const TextStyle(fontSize: 13),
-                                ),
-                                if (user['phone'] != null)
-                                  Text(
-                                    'Tel: ${user['phone']}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      user['email'] ?? 'Sin correo',
+                                      style: const TextStyle(fontSize: 13),
                                     ),
-                                  ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Registro: ${EcuadorDateUtils.formatEcuadorTime(user['created_at'] ?? '')}',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey,
-                                  ),
+                                    if (user['phone'] != null)
+                                      Text(
+                                        'Tel: ${user['phone']}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Registro: ${EcuadorDateUtils.formatEcuadorTime(user['created_at'] ?? '')}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
-                        ).animate(delay: AppTheme.animDelayStaggered(index)).fadeIn(duration: AppTheme.animDurationStandard).slideY(begin: AppTheme.animSlideYBegin, curve: AppTheme.animCurveStandard);
+                              ),
+                            )
+                            .animate(delay: AppTheme.animDelayStaggered(index))
+                            .fadeIn(duration: AppTheme.animDurationStandard)
+                            .slideY(
+                              begin: AppTheme.animSlideYBegin,
+                              curve: AppTheme.animCurveStandard,
+                            );
                       },
                     ),
                   ),

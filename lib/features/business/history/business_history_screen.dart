@@ -37,7 +37,7 @@ class _BusinessHistoryScreenState extends State<BusinessHistoryScreen> {
 
       var rewardsQuery = supabase
           .from('rewards')
-          .select('*, profiles!inner(full_name)')
+          .select('*, description, profiles!inner(full_name)')
           .eq('business_id', widget.businessId);
 
       if (_dateRange != null) {
@@ -207,13 +207,26 @@ class _BusinessHistoryScreenState extends State<BusinessHistoryScreen> {
         final profile = reward['profiles'];
         final profileName = profile['full_name'] ?? 'Usuario';
         return ListTile(
-          leading: const Icon(Icons.card_giftcard, color: AppTheme.accentPurple),
+          leading: const Icon(
+            Icons.card_giftcard,
+            color: AppTheme.accentPurple,
+          ),
           title: Text(
             profileName,
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          subtitle: Text(
-            EcuadorDateUtils.formatEcuadorTime(reward['earned_at']),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                reward['description'] ?? 'Premio',
+                style: TextStyle(
+                  color: AppTheme.accentPurple,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(EcuadorDateUtils.formatEcuadorTime(reward['earned_at'])),
+            ],
           ),
           trailing: Text(
             '-${reward['points_used']} Pts',

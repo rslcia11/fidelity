@@ -7,6 +7,7 @@ import 'admin_businesses_screen.dart';
 import 'admin_users_screen.dart';
 import 'admin_activity_screen.dart';
 import 'admin_rewards_screen.dart';
+import 'admin_qr_stats_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -128,48 +129,60 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                     const SizedBox(height: 16),
                     Row(
-                      children: [
-                        Expanded(
-                          child: _MetricCard(
-                            title: 'Negocios',
-                            value: _totalBusinesses.toString(),
-                            icon: Icons.storefront,
-                            color: AppTheme.accentPurple,
-                          ),
+                          children: [
+                            Expanded(
+                              child: _MetricCard(
+                                title: 'Negocios',
+                                value: _totalBusinesses.toString(),
+                                icon: Icons.storefront,
+                                color: AppTheme.accentPurple,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _MetricCard(
+                                title: 'Usuarios',
+                                value: _totalUsers.toString(),
+                                icon: Icons.people_outline,
+                                color: AppTheme.accentYellow,
+                              ),
+                            ),
+                          ],
+                        )
+                        .animate()
+                        .fadeIn(duration: AppTheme.animDurationStandard)
+                        .slideY(
+                          begin: AppTheme.animSlideYBegin,
+                          curve: AppTheme.animCurveStandard,
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _MetricCard(
-                            title: 'Usuarios',
-                            value: _totalUsers.toString(),
-                            icon: Icons.people_outline,
-                            color: AppTheme.accentYellow,
-                          ),
-                        ),
-                      ],
-                    ).animate().fadeIn(duration: AppTheme.animDurationStandard).slideY(begin: AppTheme.animSlideYBegin, curve: AppTheme.animCurveStandard),
                     const SizedBox(height: 16),
                     Row(
-                      children: [
-                        Expanded(
-                          child: _MetricCard(
-                            title: 'Escaneos',
-                            value: _totalScans.toString(),
-                            icon: Icons.qr_code_scanner,
-                            color: AppTheme.accentPink,
-                          ),
+                          children: [
+                            Expanded(
+                              child: _MetricCard(
+                                title: 'Escaneos',
+                                value: _totalScans.toString(),
+                                icon: Icons.qr_code_scanner,
+                                color: AppTheme.accentPink,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _MetricCard(
+                                title: 'Premios',
+                                value: _totalRewards.toString(),
+                                icon: Icons.card_giftcard,
+                                color: AppTheme.accentGreen,
+                              ),
+                            ),
+                          ],
+                        )
+                        .animate(delay: 100.ms)
+                        .fadeIn(duration: AppTheme.animDurationStandard)
+                        .slideY(
+                          begin: AppTheme.animSlideYBegin,
+                          curve: AppTheme.animCurveStandard,
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _MetricCard(
-                            title: 'Premios',
-                            value: _totalRewards.toString(),
-                            icon: Icons.card_giftcard,
-                            color: AppTheme.accentGreen,
-                          ),
-                        ),
-                      ],
-                    ).animate(delay: 100.ms).fadeIn(duration: AppTheme.animDurationStandard).slideY(begin: AppTheme.animSlideYBegin, curve: AppTheme.animCurveStandard),
                     const SizedBox(height: 32),
                     const Text(
                       'Módulos',
@@ -181,56 +194,99 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                     const SizedBox(height: 16),
                     _ModuleListTile(
-                      title: 'Gestión de Negocios',
-                      subtitle: 'Ver lista, rendimiento y detalles',
-                      icon: Icons.store,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const AdminBusinessesScreen(),
-                          ),
-                        );
-                      },
-                    ).animate(delay: 300.ms).fadeIn(duration: AppTheme.animDurationStandard).slideY(begin: AppTheme.animSlideYBegin, curve: AppTheme.animCurveStandard),
+                          title: 'Gestión de Negocios',
+                          subtitle: 'Ver lista, rendimiento y detalles',
+                          icon: Icons.store,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const AdminBusinessesScreen(),
+                              ),
+                            );
+                          },
+                        )
+                        .animate(delay: 300.ms)
+                        .fadeIn(duration: AppTheme.animDurationStandard)
+                        .slideY(
+                          begin: AppTheme.animSlideYBegin,
+                          curve: AppTheme.animCurveStandard,
+                        ),
                     const SizedBox(height: 12),
                     _ModuleListTile(
-                      title: 'Gestión de Usuarios',
-                      subtitle: 'Ver todos los perfiles y roles',
-                      icon: Icons.group,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const AdminUsersScreen(),
-                          ),
-                        );
-                      },
-                    ).animate(delay: 400.ms).fadeIn(duration: AppTheme.animDurationStandard).slideY(begin: AppTheme.animSlideYBegin, curve: AppTheme.animCurveStandard),
+                          title: 'Gestión de Usuarios',
+                          subtitle: 'Ver todos los perfiles y roles',
+                          icon: Icons.group,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const AdminUsersScreen(),
+                              ),
+                            );
+                          },
+                        )
+                        .animate(delay: 400.ms)
+                        .fadeIn(duration: AppTheme.animDurationStandard)
+                        .slideY(
+                          begin: AppTheme.animSlideYBegin,
+                          curve: AppTheme.animCurveStandard,
+                        ),
                     const SizedBox(height: 12),
                     _ModuleListTile(
-                      title: 'Gestión de Actividad',
-                      subtitle: 'Ver historial de escaneos y validaciones',
-                      icon: Icons.history,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const AdminActivityScreen(),
-                          ),
-                        );
-                      },
-                    ).animate(delay: 500.ms).fadeIn(duration: AppTheme.animDurationStandard).slideY(begin: AppTheme.animSlideYBegin, curve: AppTheme.animCurveStandard),
+                          title: 'Estadísticas QR',
+                          subtitle: 'Ver ranking de negocios por escaneos',
+                          icon: Icons.bar_chart,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const AdminQrStatsScreen(),
+                              ),
+                            );
+                          },
+                        )
+                        .animate(delay: 450.ms)
+                        .fadeIn(duration: AppTheme.animDurationStandard)
+                        .slideY(
+                          begin: AppTheme.animSlideYBegin,
+                          curve: AppTheme.animCurveStandard,
+                        ),
                     const SizedBox(height: 12),
                     _ModuleListTile(
-                      title: 'Gestión de Premios',
-                      subtitle: 'Ver historial de premios canjeados',
-                      icon: Icons.card_giftcard,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const AdminRewardsScreen(),
-                          ),
-                        );
-                      },
-                    ).animate(delay: 600.ms).fadeIn(duration: AppTheme.animDurationStandard).slideY(begin: AppTheme.animSlideYBegin, curve: AppTheme.animCurveStandard),
+                          title: 'Gestión de Actividad',
+                          subtitle: 'Ver historial de escaneos y validaciones',
+                          icon: Icons.history,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const AdminActivityScreen(),
+                              ),
+                            );
+                          },
+                        )
+                        .animate(delay: 500.ms)
+                        .fadeIn(duration: AppTheme.animDurationStandard)
+                        .slideY(
+                          begin: AppTheme.animSlideYBegin,
+                          curve: AppTheme.animCurveStandard,
+                        ),
+                    const SizedBox(height: 12),
+                    _ModuleListTile(
+                          title: 'Gestión de Premios',
+                          subtitle: 'Ver historial de premios canjeados',
+                          icon: Icons.card_giftcard,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const AdminRewardsScreen(),
+                              ),
+                            );
+                          },
+                        )
+                        .animate(delay: 600.ms)
+                        .fadeIn(duration: AppTheme.animDurationStandard)
+                        .slideY(
+                          begin: AppTheme.animSlideYBegin,
+                          curve: AppTheme.animCurveStandard,
+                        ),
                   ],
                 ),
               ),
@@ -290,13 +346,7 @@ class _MetricCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.black54,
-            ),
-          ),
+          Text(title, style: TextStyle(fontSize: 14, color: Colors.black54)),
         ],
       ),
     );
