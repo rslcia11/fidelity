@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/login_screen.dart';
+import 'features/auth/auth_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,9 +24,9 @@ class FidelityApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Fidelity',
-      theme: AppTheme.warmTheme,
+      theme: AppTheme.popTheme,
       debugShowCheckedModeBanner: false,
-      home: const LoginScreen(),
+      home: const AuthWrapper(),
     );
   }
 }
@@ -37,18 +38,12 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Fidelity'),
-      ),
+      appBar: AppBar(title: const Text('Fidelity')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.card_giftcard,
-              size: 80,
-              color: AppTheme.primary,
-            ),
+            Icon(Icons.card_giftcard, size: 80, color: AppTheme.primary),
             const SizedBox(height: 24),
             Text(
               '¡Tema Configurado!',

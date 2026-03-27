@@ -1,7 +1,14 @@
-// lib/features/auth/register_screen.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'login_screen.dart';
+import 'auth_wrapper.dart';
+import '../business/create_business_screen.dart';
+import '../../core/validators/app_validators.dart';
+import '../../core/theme/app_theme.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -13,28 +20,16 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
-  String _selectedRole = 'client'; // 'client' o 'business_owner'
-  
-  // Controladores para todos los campos
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
+  String _selectedRole = 'client';
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
-  
-  // Campos específicos para business
-  final _businessNameController = TextEditingController();
-  final _businessDescriptionController = TextEditingController();
-  final _rewardDescriptionController = TextEditingController();
-  final _pointsRequiredController = TextEditingController(text: '10');
-  final _addressController = TextEditingController();
-  
-  String _selectedCategory = 'cafe';
-  final List<String> _categories = [
-    'cafe', 'restaurant', 'bakery', 'gym', 'salon', 
-    'spa', 'retail', 'grocery', 'pharmacy', 'laundry', 
-    'car_wash', 'other'
-  ];
+  XFile? _avatarFile;
 
   final supabase = Supabase.instance.client;
 
@@ -45,11 +40,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _confirmPasswordController.dispose();
     _fullNameController.dispose();
     _phoneController.dispose();
-    _businessNameController.dispose();
-    _businessDescriptionController.dispose();
-    _rewardDescriptionController.dispose();
-    _pointsRequiredController.dispose();
-    _addressController.dispose();
     super.dispose();
   }
 
@@ -59,544 +49,335 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. CREAR USUARIO EN AUTH
-      final metadata = {
-        'role': _selectedRole,
-      };
-
+      final metadata = {'role': _selectedRole};
       final authResponse = await supabase.auth.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
-        data: metadata, // raw_user_meta_data
+        data: metadata,
       );
 
       if (authResponse.user == null) throw Exception('Error al crear usuario');
 
       final userId = authResponse.user!.id;
 
-      // 2. CREAR PERFIL EN public.profiles
-      await supabase.from('profiles').insert({
+      // Subir Avatar si existe
+      String? avatarUrl;
+      if (_avatarFile != null) {
+        try {
+          final fileBytes = await _avatarFile!.readAsBytes();
+          final fileExt = _avatarFile!.name.split('.').last.toLowerCase();
+          final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+          final imagePath = '$userId/$fileName';
+
+          await supabase.storage.from('avatars').uploadBinary(
+            imagePath,
+            fileBytes,
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+          );
+          avatarUrl = supabase.storage.from('avatars').getPublicUrl(imagePath);
+        } catch (e) {
+          debugPrint('Error uploading avatar: $e');
+        }
+      }
+
+      await supabase.from('profiles').upsert({
         'id': userId,
         'full_name': _fullNameController.text.trim(),
         'email': _emailController.text.trim(),
-        'phone': _phoneController.text.trim().isEmpty 
-            ? null 
-            : _phoneController.text.trim(),
-        'created_at': DateTime.now().toIso8601String(),
+        'phone': _phoneController.text.trim(),
+        'avatar_url': avatarUrl,
+        'role': _selectedRole,
         'updated_at': DateTime.now().toIso8601String(),
       });
 
-      // 3. SI ES BUSINESS OWNER - CREAR NEGOCIO
-      String? businessId;
-      if (_selectedRole == 'business_owner') {
-        final pointsRequired = int.tryParse(_pointsRequiredController.text) ?? 10;
-        
-        final businessResponse = await supabase.from('businesses').insert({
-          'owner_id': userId,
-          'name': _businessNameController.text.trim(),
-          'description': _businessDescriptionController.text.trim().isEmpty
-              ? null
-              : _businessDescriptionController.text.trim(),
-          'address': _addressController.text.trim().isEmpty
-              ? null
-              : _addressController.text.trim(),
-          'category': _selectedCategory,
-          'reward_description': _rewardDescriptionController.text.trim(),
-          'points_required': pointsRequired,
-          'cooldown_hours': 4, // valor por defecto
-          'is_active': true,
-          'created_at': DateTime.now().toIso8601String(),
-          'updated_at': DateTime.now().toIso8601String(),
-        }).select('id').single();
-
-        businessId = businessResponse['id'] as String;
-
-        // 4. ACTUALIZAR METADATA DEL USUARIO CON BUSINESS ID
-        await supabase.auth.updateUser(
-          UserAttributes(
-            data: {
-              'role': 'business_owner',
-              'business_id': businessId,
-            },
-          ),
-        );
-      }
-
       if (mounted) {
-        // MOSTRAR ÉXITO
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _selectedRole == 'business_owner'
-                  ? '✅ Negocio registrado exitosamente'
-                  : '✅ Cuenta creada exitosamente',
-            ),
-            backgroundColor: const Color(0xFF4CAF50),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-
-        // IR A LOGIN
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
+        _showSuccessToast();
+        if (authResponse.session == null) {
+          _showVerificationDialog();
+        } else {
+          Future.delayed(1500.ms, () {
+            if (mounted) {
+              if (_selectedRole == 'business') {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const CreateBusinessScreen()),
+                  (route) => false,
+                );
+              } else {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
+            }
+          });
+        }
       }
     } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.message}'),
-            backgroundColor: const Color(0xFFB85C50),
-            behavior: SnackBarBehavior.floating,
-          ),
+          SnackBar(content: Text(e.message), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: const Color(0xFFB85C50),
-            behavior: SnackBarBehavior.floating,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showSuccessToast() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        duration: const Duration(milliseconds: 2500),
+        content: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          decoration: BoxDecoration(
+            color: AppTheme.accentGreen,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.accentGreen.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.check_circle_outline, color: Colors.white),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  '¡CUENTA CREADA CON ÉXITO!',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        )
+        .animate()
+        .fadeIn(duration: 400.ms)
+        .slideY(begin: 0.5, end: 0, curve: Curves.easeOutBack),
+      ),
+    );
+  }
+
+  void _showVerificationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+        title: const Text('¡Casi listo! 📧', textAlign: TextAlign.center),
+        content: const Text(
+          'Te hemos enviado un correo de verificación. Por favor, confirma tu cuenta para continuar.',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              },
+              child: const Text('Entendido'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Crear cuenta'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: const Color(0xFF2C2416),
+        title: const Text('ÚNETE A NOSOTROS'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // LOGO
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF8B6F47).withOpacity(0.1),
-                      shape: BoxShape.circle,
+                // Selector de Rol (Profesional)
+                Row(
+                  children: [
+                    Expanded(
+                      child: _RoleSelectorCard(
+                        title: 'CLIENTE',
+                        icon: Icons.person_outline,
+                        color: AppTheme.accentYellow,
+                        isSelected: _selectedRole == 'client',
+                        onTap: () => setState(() => _selectedRole = 'client'),
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.card_giftcard,
-                      size: 48,
-                      color: Color(0xFF8B6F47),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _RoleSelectorCard(
+                        title: 'NEGOCIO',
+                        icon: Icons.storefront_outlined,
+                        color: AppTheme.accentPurple,
+                        isSelected: _selectedRole == 'business',
+                        onTap: () => setState(() => _selectedRole = 'business'),
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 24),
+                  ],
+                ).animate().slideY(begin: 0.2).fadeIn(),
 
-                // TÍTULO
-                const Text(
-                  'Únete a Fidelity',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2C2416),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Crea tu cuenta y empieza a disfrutar',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: const Color(0xFF6B5D4F).withOpacity(0.8),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
                 const SizedBox(height: 32),
 
-                // SELECTOR DE ROL
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F1E8).withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFF8B6F47).withOpacity(0.2),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Tipo de cuenta',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF2C2416),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _RoleCard(
-                              title: 'Cliente',
-                              icon: Icons.person,
-                              description: 'Acumula puntos y canjea premios',
-                              isSelected: _selectedRole == 'client',
-                              onTap: () {
-                                setState(() => _selectedRole = 'client');
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _RoleCard(
-                              title: 'Negocio',
-                              icon: Icons.store,
-                              description: 'Registra tu local y fideliza clientes',
-                              isSelected: _selectedRole == 'business_owner',
-                              onTap: () {
-                                setState(() => _selectedRole = 'business_owner');
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // === CAMPOS COMUNES ===
-                const Text(
-                  'Datos personales',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2C2416),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Nombre completo
-                TextFormField(
-                  controller: _fullNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Nombre completo',
-                    prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF8B6F47)),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF8B6F47), width: 2),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Ingresa tu nombre completo';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Email
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF8B6F47)),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF8B6F47), width: 2),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Ingresa tu email';
-                    }
-                    if (!value.contains('@') || !value.contains('.')) {
-                      return 'Email inválido';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Teléfono (opcional)
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: 'Teléfono (opcional)',
-                    prefixIcon: const Icon(Icons.phone_outlined, color: Color(0xFF8B6F47)),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Password
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Contraseña',
-                    prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF8B6F47)),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF8B6F47), width: 2),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Ingresa tu contraseña';
-                    }
-                    if (value.length < 6) {
-                      return 'Mínimo 6 caracteres';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Confirmar password
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Confirmar contraseña',
-                    prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF8B6F47)),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Confirma tu contraseña';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Las contraseñas no coinciden';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // === CAMPOS ESPECÍFICOS PARA BUSINESS ===
-                if (_selectedRole == 'business_owner') ...[
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF8B6F47).withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFF8B6F47).withOpacity(0.2),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                // Selector de Imagen
+                Center(
+                  child: GestureDetector(
+                    onTap: () async {
+                      final picker = ImagePicker();
+                      final img = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+                      if (img != null) setState(() => _avatarFile = img);
+                    },
+                    child: Stack(
                       children: [
-                        Row(
-                          children: [
-                            Icon(Icons.store, color: const Color(0xFF8B6F47), size: 20),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Información del negocio',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF2C2416),
-                              ),
-                            ),
-                          ],
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.04),
+                            shape: BoxShape.circle,
+                            image: _avatarFile != null 
+                              ? DecorationImage(image: FileImage(File(_avatarFile!.path)), fit: BoxFit.cover)
+                              : null,
+                          ),
+                          child: _avatarFile == null 
+                            ? const Icon(Icons.add_a_photo_outlined, size: 32, color: Colors.black26)
+                            : null,
                         ),
-                        const SizedBox(height: 16),
-
-                        // Nombre del negocio
-                        TextFormField(
-                          controller: _businessNameController,
-                          decoration: InputDecoration(
-                            labelText: 'Nombre del negocio',
-                            prefixIcon: const Icon(Icons.storefront_outlined, color: Color(0xFF8B6F47)),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                        if (_avatarFile != null)
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(color: AppTheme.accentPurple, shape: BoxShape.circle),
+                              child: const Icon(Icons.edit, size: 14, color: Colors.white),
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Ingresa el nombre del negocio';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Categoría
-                        DropdownButtonFormField<String>(
-                          value: _selectedCategory,
-                          decoration: InputDecoration(
-                            labelText: 'Categoría',
-                            prefixIcon: const Icon(Icons.category_outlined, color: Color(0xFF8B6F47)),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          items: _categories.map((category) {
-                            return DropdownMenuItem(
-                              value: category,
-                              child: Text(category[0].toUpperCase() + category.substring(1)),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() => _selectedCategory = value!);
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Descripción del negocio (opcional)
-                        TextFormField(
-                          controller: _businessDescriptionController,
-                          maxLines: 3,
-                          decoration: InputDecoration(
-                            labelText: 'Descripción (opcional)',
-                            prefixIcon: const Icon(Icons.description_outlined, color: Color(0xFF8B6F47)),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            alignLabelWithHint: true,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Dirección (opcional)
-                        TextFormField(
-                          controller: _addressController,
-                          decoration: InputDecoration(
-                            labelText: 'Dirección (opcional)',
-                            prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFF8B6F47)),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Descripción del premio
-                        TextFormField(
-                          controller: _rewardDescriptionController,
-                          decoration: InputDecoration(
-                            labelText: 'Descripción del premio',
-                            prefixIcon: const Icon(Icons.card_giftcard, color: Color(0xFF8B6F47)),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Describe el premio que ofrecerás';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Puntos requeridos
-                        TextFormField(
-                          controller: _pointsRequiredController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: 'Puntos requeridos para premio',
-                            prefixIcon: const Icon(Icons.star_outline, color: Color(0xFF8B6F47)),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Ingresa los puntos requeridos';
-                            }
-                            if (int.tryParse(value) == null) {
-                              return 'Ingresa un número válido';
-                            }
-                            return null;
-                          },
-                        ),
                       ],
                     ),
                   ),
-                ],
+                ).animate(delay: 100.ms).fadeIn().scale(),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 40),
 
-                // BOTÓN DE REGISTRO
+                Text('DATOS PERSONALES', style: theme.textTheme.labelLarge)
+                  .animate(delay: 200.ms).fadeIn(),
+                
+                const SizedBox(height: 20),
+
+                // Campos del Formulario
+                Column(
+                  children: [
+                    TextFormField(
+                      controller: _fullNameController,
+                      decoration: const InputDecoration(
+                        hintText: 'Nombre completo',
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
+                      validator: AppValidators.validateName,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        hintText: 'email',
+                        prefixIcon: Icon(Icons.email_outlined),
+                      ),
+                      validator: AppValidators.validateEmail,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        hintText: 'Teléfono',
+                        prefixIcon: Icon(Icons.phone_outlined),
+                        helperText: '10 dígitos (Ecuador)',
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
+                      validator: AppValidators.validateEcuadorPhone,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: !_isPasswordVisible,
+                      decoration: InputDecoration(
+                        hintText: 'Contraseña segura',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
+                          onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                        ),
+                      ),
+                      validator: AppValidators.validatePassword,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      obscureText: !_isConfirmPasswordVisible,
+                      decoration: InputDecoration(
+                        hintText: 'Confirma tu contraseña',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(_isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off),
+                          onPressed: () => setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
+                        ),
+                      ),
+                      validator: (v) => AppValidators.validateConfirmPassword(v, _passwordController.text),
+                    ),
+                  ],
+                ).animate(delay: 300.ms).slideY(begin: 0.1).fadeIn(),
+
+                const SizedBox(height: 48),
+
+                // Botón Registro
                 ElevatedButton(
                   onPressed: _isLoading ? null : _register,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B6F47),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 54),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
                   child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : Text(
-                          _selectedRole == 'business_owner'
-                              ? 'Registrar negocio'
-                              : 'Crear cuenta',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
+                      ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
+                      : Text(_selectedRole == 'business' ? 'CONFIGURAR NEGOCIO' : 'CREAR MI CUENTA'),
+                ).animate(delay: 500.ms).scale(curve: Curves.easeOutBack).fadeIn(),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
 
-                // LINK A LOGIN
                 TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    );
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF8B6F47),
+                  onPressed: () => Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
                   ),
-                  child: const Text('¿Ya tienes cuenta? Inicia sesión'),
-                ),
+                  child: const Text('¿YA TIENES CUENTA? INICIA SESIÓN'),
+                ).animate(delay: 700.ms).fadeIn(),
               ],
             ),
           ),
@@ -606,18 +387,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 }
 
-// WIDGET PARA SELECCIONAR ROL
-class _RoleCard extends StatelessWidget {
+class _RoleSelectorCard extends StatelessWidget {
   final String title;
   final IconData icon;
-  final String description;
+  final Color color;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _RoleCard({
+  const _RoleSelectorCard({
     required this.title,
     required this.icon,
-    required this.description,
+    required this.color,
     required this.isSelected,
     required this.onTap,
   });
@@ -626,51 +406,34 @@ class _RoleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
+      borderRadius: BorderRadius.circular(32),
+      child: AnimatedContainer(
+        duration: 300.ms,
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF8B6F47).withOpacity(0.1)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? color.withOpacity(0.15) : AppTheme.surface,
+          borderRadius: BorderRadius.circular(32),
           border: Border.all(
-            color: isSelected
-                ? const Color(0xFF8B6F47)
-                : const Color(0xFF8B6F47).withOpacity(0.3),
-            width: isSelected ? 2 : 1,
+            color: isSelected ? color : Colors.transparent,
+            width: 2.5,
           ),
         ),
         child: Column(
           children: [
             Icon(
               icon,
-              color: isSelected
-                  ? const Color(0xFF8B6F47)
-                  : const Color(0xFF6B5D4F),
-              size: 32,
+              size: 40,
+              color: isSelected ? color : Colors.black45,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               title,
               style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isSelected
-                    ? const Color(0xFF8B6F47)
-                    : const Color(0xFF2C2416),
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+                color: isSelected ? Colors.black : Colors.black45,
+                letterSpacing: 0.5,
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              description,
-              style: TextStyle(
-                fontSize: 11,
-                color: isSelected
-                    ? const Color(0xFF8B6F47).withOpacity(0.8)
-                    : const Color(0xFF6B5D4F),
-              ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
