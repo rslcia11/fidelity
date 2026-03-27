@@ -302,10 +302,12 @@ class _CardHistoryScreenState extends State<CardHistoryScreen> {
                                     final user = await _transferService
                                         .findUserByEmail(email);
 
-                                    // 2. Si no existe, mostrar botón de invitar
+                                    // 2. Si no existe, mostrar mensaje y botón de invitar
                                     if (user == null) {
                                       setModalState(() {
                                         isLoading = false;
+                                        errorMessage =
+                                            'Esa cuenta no existe. Dile a tu fideliamigo que descargue la app y que cree una cuenta para que le puedas transferir el premio.';
                                         showInviteButton = true;
                                       });
                                       return;
@@ -593,22 +595,28 @@ class _CardHistoryScreenState extends State<CardHistoryScreen> {
                             Text(
                               isScan
                                   ? actionTitle
-                                  : (item['description']
+                                  : (item['businesses']?['reward_description']
                                             ?.toString()
                                             .toUpperCase() ??
                                         item['reward_description']
                                             ?.toString()
                                             .toUpperCase() ??
-                                        item['businesses']?['reward_description']
-                                            ?.toString()
-                                            .toUpperCase() ??
-                                        actionTitle),
+                                        'PREMIO'),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 13,
                                 letterSpacing: 0.5,
                               ),
                             ),
+                            if (!isScan && item['description'] != null)
+                              Text(
+                                item['description'].toString(),
+                                style: const TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                             const SizedBox(height: 2),
                             Text(
                               EcuadorDateUtils.formatEcuadorTime(

@@ -59,7 +59,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       if (mounted) {
         setState(() {
           _totalBusinesses = businessesResponse.count ?? 0;
-          _totalUsers = usersResponse.count ?? 0;
+          _totalUsers = (usersResponse.count ?? 0) - 1;
           _totalScans = scansResponse.count ?? 0;
           _totalRewards = rewardsResponse.count ?? 0;
           _isLoading = false;

@@ -60,6 +60,7 @@ class _MyCardsScreenState extends State<MyCardsScreen> {
               category_id,
               business_categories(name),
               reward_description,
+              reward_long_description,
               points_required,
               logo_url
             )
@@ -550,14 +551,24 @@ class _LoyaltyCardItem extends StatelessWidget {
                               fontWeight: FontWeight.w900,
                             ),
                           ),
-                          Text(
-                            business['reward_description'] ??
-                                'RECOMPENSA EXCLUSIVA',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.black45,
-                              fontWeight: FontWeight.w700,
+                          if (business['reward_description'] != null)
+                            Text(
+                              business['reward_description']!
+                                  .toString()
+                                  .toUpperCase(),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
-                          ),
+                          if (business['reward_long_description'] != null)
+                            Text(
+                              business['reward_long_description'].toString(),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.black38,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                         ],
                       ),
                     ),

@@ -35,14 +35,15 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
   late TextEditingController _businessNameController;
   late TextEditingController _businessDescriptionController;
   late TextEditingController _rewardDescriptionController;
+  late TextEditingController _rewardLongDescriptionController;
   late TextEditingController _pointsRequiredController;
-  
+
   String? _logoUrl;
   XFile? _newLogoFile;
-  
+
   BusinessCategory? _selectedCategory;
   List<BusinessCategory> _categories = [];
-  
+
   double? _latitude;
   double? _longitude;
   String? _address;
@@ -53,16 +54,27 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
     _logoUrl = widget.business['logo_url'];
     _fullNameController = TextEditingController(text: widget.ownerName);
     _phoneController = TextEditingController(text: ''); // We'll fetch this
-    
-    _businessNameController = TextEditingController(text: widget.business['name']);
-    _businessDescriptionController = TextEditingController(text: widget.business['description'] ?? '');
-    _rewardDescriptionController = TextEditingController(text: widget.business['reward_description'] ?? '');
-    _pointsRequiredController = TextEditingController(text: widget.business['points_required']?.toString() ?? '10');
-    
+
+    _businessNameController = TextEditingController(
+      text: widget.business['name'],
+    );
+    _businessDescriptionController = TextEditingController(
+      text: widget.business['description'] ?? '',
+    );
+    _rewardDescriptionController = TextEditingController(
+      text: widget.business['reward_description'] ?? '',
+    );
+    _rewardLongDescriptionController = TextEditingController(
+      text: widget.business['reward_long_description'] ?? '',
+    );
+    _pointsRequiredController = TextEditingController(
+      text: widget.business['points_required']?.toString() ?? '10',
+    );
+
     _latitude = widget.business['latitude'];
     _longitude = widget.business['longitude'];
     _address = widget.business['address'];
-    
+
     _loadProfileData();
     _loadCategories();
   }
@@ -75,7 +87,7 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
           .select('phone')
           .eq('id', userId)
           .single();
-      
+
       if (mounted) {
         setState(() {
           _phoneController.text = profile['phone'] ?? '';
@@ -92,17 +104,19 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
           .from('business_categories')
           .select()
           .order('name');
-      
+
       if (mounted) {
         setState(() {
           _categories = (response as List)
               .map((c) => BusinessCategory.fromJson(c))
               .toList();
-          
+
           final categoryId = widget.business['category_id'];
           if (categoryId != null) {
             try {
-              _selectedCategory = _categories.firstWhere((c) => c.id == categoryId);
+              _selectedCategory = _categories.firstWhere(
+                (c) => c.id == categoryId,
+              );
             } catch (_) {}
           }
         });
@@ -119,13 +133,17 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
     _businessNameController.dispose();
     _businessDescriptionController.dispose();
     _rewardDescriptionController.dispose();
+    _rewardLongDescriptionController.dispose();
     _pointsRequiredController.dispose();
     super.dispose();
   }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
     if (image != null) {
       setState(() => _newLogoFile = image);
     }
@@ -133,7 +151,7 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
 
   Future<void> _saveChanges() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() => _isLoading = true);
     try {
       final userId = supabase.auth.currentUser!.id;
@@ -147,45 +165,66 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
         final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
         final imagePath = '$userId/$fileName';
 
-        await supabase.storage.from('business-logos').uploadBinary(
-          imagePath,
-          fileBytes,
-          fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
-        );
-        finalLogoUrl = supabase.storage.from('business-logos').getPublicUrl(imagePath);
+        await supabase.storage
+            .from('business-logos')
+            .uploadBinary(
+              imagePath,
+              fileBytes,
+              fileOptions: const FileOptions(
+                cacheControl: '3600',
+                upsert: true,
+              ),
+            );
+        finalLogoUrl = supabase.storage
+            .from('business-logos')
+            .getPublicUrl(imagePath);
       }
 
       // 2. Update Profile
-      await supabase.from('profiles').update({
-        'full_name': _fullNameController.text.trim(),
-        'phone': _phoneController.text.trim(),
-      }).eq('id', userId);
+      await supabase
+          .from('profiles')
+          .update({
+            'full_name': _fullNameController.text.trim(),
+            'phone': _phoneController.text.trim(),
+          })
+          .eq('id', userId);
 
       // 3. Update Business
-      await supabase.from('businesses').update({
-        'name': _businessNameController.text.trim(),
-        'description': _businessDescriptionController.text.trim(),
-        'logo_url': finalLogoUrl,
-        'category_id': _selectedCategory?.id,
-        'category': _selectedCategory?.name,
-        'address': _address,
-        'latitude': _latitude,
-        'longitude': _longitude,
-        'reward_description': _rewardDescriptionController.text.trim(),
-        'points_required': int.parse(_pointsRequiredController.text),
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', businessId);
+      await supabase
+          .from('businesses')
+          .update({
+            'name': _businessNameController.text.trim(),
+            'description': _businessDescriptionController.text.trim(),
+            'logo_url': finalLogoUrl,
+            'category_id': _selectedCategory?.id,
+            'category': _selectedCategory?.name,
+            'address': _address,
+            'latitude': _latitude,
+            'longitude': _longitude,
+            'reward_description': _rewardDescriptionController.text.trim(),
+            'reward_long_description': _rewardLongDescriptionController.text
+                .trim(),
+            'points_required': int.parse(_pointsRequiredController.text),
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', businessId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Perfil actualizado exitosamente'), backgroundColor: AppTheme.accentGreen),
+          const SnackBar(
+            content: Text('✅ Perfil actualizado exitosamente'),
+            backgroundColor: AppTheme.accentGreen,
+          ),
         );
         Navigator.pop(context, true); // Indicate success to refresh parent
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.accentPink),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppTheme.accentPink,
+          ),
         );
       }
     } finally {
@@ -199,14 +238,22 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
       builder: (context) {
         final confirmController = TextEditingController();
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-          title: const Text('¿ELIMINAR CUENTA?', style: TextStyle(fontWeight: FontWeight.w900)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(32),
+          ),
+          title: const Text(
+            '¿ELIMINAR CUENTA?',
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
                 'Esta acción es irreversible. Se borrarán todos tus datos, negocios, premios y puntos acumulados.',
-                style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black54),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
               ),
               const SizedBox(height: 24),
               const Text(
@@ -220,10 +267,16 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
                   hintText: 'ELIMINAR',
                   filled: true,
                   fillColor: Colors.black.withOpacity(0.05),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2,
+                ),
               ),
             ],
           ),
@@ -238,7 +291,9 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
                   Navigator.pop(context, true);
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentPink),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accentPink,
+              ),
               child: const Text('ELIMINAR DEFINITIVAMENTE'),
             ),
           ],
@@ -251,17 +306,23 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
     setState(() => _isLoading = true);
     try {
       final userId = supabase.auth.currentUser!.id;
-      
+
       // Intentamos llamar a la Edge Function (recomendado para GDPR completo)
       try {
         await supabase.functions.invoke(
           'hyper-action',
-          headers: {'Authorization': 'Bearer ${supabase.auth.currentSession?.accessToken}'},
+          headers: {
+            'Authorization':
+                'Bearer ${supabase.auth.currentSession?.accessToken}',
+          },
         );
       } catch (e) {
         debugPrint('Edge Function failed, using RPC fallback: $e');
         // Fallback: Si no has desplegado la Edge Function, al menos limpiamos los datos públicos
-        await supabase.rpc('delete_user_data', params: {'user_id_param': userId});
+        await supabase.rpc(
+          'delete_user_data',
+          params: {'user_id_param': userId},
+        );
       }
 
       await supabase.auth.signOut();
@@ -274,7 +335,10 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al eliminar: $e'), backgroundColor: AppTheme.accentPink),
+          SnackBar(
+            content: Text('Error al eliminar: $e'),
+            backgroundColor: AppTheme.accentPink,
+          ),
         );
         setState(() => _isLoading = false);
       }
@@ -288,12 +352,23 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
       appBar: AppBar(
         toolbarHeight: 80,
         backgroundColor: Colors.white,
-        title: const Text('EDITAR PERFIL', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1.5)),
+        title: const Text(
+          'EDITAR PERFIL',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 16,
+            letterSpacing: 1.5,
+          ),
+        ),
         centerTitle: true,
         actions: [
           IconButton(
             onPressed: _isLoading ? null : _saveChanges,
-            icon: const Icon(Icons.check_rounded, color: AppTheme.accentGreen, size: 28),
+            icon: const Icon(
+              Icons.check_rounded,
+              color: AppTheme.accentGreen,
+              size: 28,
+            ),
           ),
           const SizedBox(width: 8),
         ],
@@ -321,16 +396,33 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   boxShadow: [
-                                    BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 10)),
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.08),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
+                                    ),
                                   ],
                                   image: _newLogoFile != null
-                                      ? DecorationImage(image: FileImage(File(_newLogoFile!.path)), fit: BoxFit.cover)
+                                      ? DecorationImage(
+                                          image: FileImage(
+                                            File(_newLogoFile!.path),
+                                          ),
+                                          fit: BoxFit.cover,
+                                        )
                                       : (_logoUrl != null
-                                          ? DecorationImage(image: NetworkImage(_logoUrl!), fit: BoxFit.cover)
-                                          : null),
+                                            ? DecorationImage(
+                                                image: NetworkImage(_logoUrl!),
+                                                fit: BoxFit.cover,
+                                              )
+                                            : null),
                                 ),
-                                child: (_logoUrl == null && _newLogoFile == null)
-                                    ? const Icon(Icons.storefront_rounded, size: 50, color: Colors.black26)
+                                child:
+                                    (_logoUrl == null && _newLogoFile == null)
+                                    ? const Icon(
+                                        Icons.storefront_rounded,
+                                        size: 50,
+                                        color: Colors.black26,
+                                      )
                                     : null,
                               ),
                             ),
@@ -339,8 +431,15 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
                               bottom: 0,
                               child: Container(
                                 padding: const EdgeInsets.all(8),
-                                decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle),
-                                child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 20),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
                               ),
                             ),
                           ],
@@ -350,37 +449,94 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
                     const SizedBox(height: 48),
 
                     // SECTION: DATOS PERSONALES
-                    _buildSectionHeader('DATOS PERSONALES', Icons.person_outline_rounded),
-                    _buildTextField(_fullNameController, 'NOMBRE COMPLETO', Icons.badge_outlined),
-                    _buildTextField(_phoneController, 'WHATSAPP / CELULAR', Icons.phone_android_rounded, keyboardType: TextInputType.phone),
-                    
+                    _buildSectionHeader(
+                      'DATOS PERSONALES',
+                      Icons.person_outline_rounded,
+                    ),
+                    _buildTextField(
+                      _fullNameController,
+                      'NOMBRE COMPLETO',
+                      Icons.badge_outlined,
+                    ),
+                    _buildTextField(
+                      _phoneController,
+                      'WHATSAPP / CELULAR',
+                      Icons.phone_android_rounded,
+                      keyboardType: TextInputType.phone,
+                    ),
+
                     const SizedBox(height: 40),
 
                     // SECTION: DATOS DEL NEGOCIO
-                    _buildSectionHeader('DATOS DEL NEGOCIO', Icons.storefront_rounded),
-                    _buildTextField(_businessNameController, 'NOMBRE DEL NEGOCIO', Icons.business_rounded),
-                    _buildTextField(_businessDescriptionController, 'DESCRIPCIÓN BREVE', Icons.description_outlined, maxLines: 2),
-                    
+                    _buildSectionHeader(
+                      'DATOS DEL NEGOCIO',
+                      Icons.storefront_rounded,
+                    ),
+                    _buildTextField(
+                      _businessNameController,
+                      'NOMBRE DEL NEGOCIO',
+                      Icons.business_rounded,
+                    ),
+                    _buildTextField(
+                      _businessDescriptionController,
+                      'DESCRIPCIÓN BREVE',
+                      Icons.description_outlined,
+                      maxLines: 2,
+                    ),
+
                     const SizedBox(height: 16),
                     // Category Dropdown
-                    const Text('CATEGORÍA', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.black38, letterSpacing: 1)),
+                    const Text(
+                      'CATEGORÍA',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                        color: Colors.black38,
+                        letterSpacing: 1,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      decoration: BoxDecoration(color: Colors.black.withOpacity(0.04), borderRadius: BorderRadius.circular(20)),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.04),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<BusinessCategory>(
                           value: _selectedCategory,
                           isExpanded: true,
-                          items: _categories.map((cat) => DropdownMenuItem(value: cat, child: Text(cat.name.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)))).toList(),
-                          onChanged: (cat) => setState(() => _selectedCategory = cat),
+                          items: _categories
+                              .map(
+                                (cat) => DropdownMenuItem(
+                                  value: cat,
+                                  child: Text(
+                                    cat.name.toUpperCase(),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (cat) =>
+                              setState(() => _selectedCategory = cat),
                         ),
                       ),
                     ),
 
                     const SizedBox(height: 24),
                     // Location Picker
-                    const Text('UBICACIÓN', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.black38, letterSpacing: 1)),
+                    const Text(
+                      'UBICACIÓN',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                        color: Colors.black38,
+                        letterSpacing: 1,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     GestureDetector(
                       onTap: () async {
@@ -393,11 +549,23 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
                           MaterialPageRoute(
                             builder: (context) => Scaffold(
                               appBar: AppBar(
-                                title: const Text('SELECCIONAR UBICACIÓN', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                                title: const Text(
+                                  'SELECCIONAR UBICACIÓN',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 14,
+                                  ),
+                                ),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(context),
-                                    child: const Text('CONFIRMAR', style: TextStyle(color: AppTheme.accentPurple, fontWeight: FontWeight.bold)),
+                                    child: const Text(
+                                      'CONFIRMAR',
+                                      style: TextStyle(
+                                        color: AppTheme.accentPurple,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
                                   const SizedBox(width: 8),
                                 ],
@@ -415,7 +583,7 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
                             ),
                           ),
                         );
-                        
+
                         setState(() {
                           _latitude = tempLat;
                           _longitude = tempLng;
@@ -427,11 +595,16 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.black.withOpacity(0.05)),
+                          border: Border.all(
+                            color: Colors.black.withOpacity(0.05),
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.location_on_rounded, color: AppTheme.accentPink),
+                            const Icon(
+                              Icons.location_on_rounded,
+                              color: AppTheme.accentPink,
+                            ),
                             const SizedBox(width: 16),
                             Expanded(
                               child: Text(
@@ -439,13 +612,18 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 12,
-                                  color: _address == null ? Colors.black26 : Colors.black,
+                                  color: _address == null
+                                      ? Colors.black26
+                                      : Colors.black,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const Icon(Icons.chevron_right_rounded, color: Colors.black26),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              color: Colors.black26,
+                            ),
                           ],
                         ),
                       ),
@@ -454,9 +632,27 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
                     const SizedBox(height: 48),
 
                     // SECTION: CAMPAÑA DE PUNTOS
-                    _buildSectionHeader('CAMPAÑA DE PUNTOS', Icons.auto_awesome_rounded),
-                    _buildTextField(_rewardDescriptionController, '¿QUÉ PREMIO ENTREGAS?', Icons.card_giftcard_rounded),
-                    _buildTextField(_pointsRequiredController, 'PUNTOS NECESARIOS', Icons.numbers_rounded, keyboardType: TextInputType.number),
+                    _buildSectionHeader(
+                      'CAMPAÑA DE PUNTOS',
+                      Icons.auto_awesome_rounded,
+                    ),
+                    _buildTextField(
+                      _rewardDescriptionController,
+                      '¿QUÉ PREMIO ENTREGAS?',
+                      Icons.card_giftcard_rounded,
+                    ),
+                    _buildTextField(
+                      _rewardLongDescriptionController,
+                      'DESCRIPCIÓN DEL PREMIO',
+                      Icons.description_rounded,
+                      maxLines: 2,
+                    ),
+                    _buildTextField(
+                      _pointsRequiredController,
+                      'PUNTOS NECESARIOS',
+                      Icons.numbers_rounded,
+                      keyboardType: TextInputType.number,
+                    ),
 
                     const SizedBox(height: 80),
 
@@ -464,10 +660,18 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
                     Center(
                       child: TextButton.icon(
                         onPressed: _deleteAccount,
-                        icon: const Icon(Icons.delete_forever_rounded, color: Colors.black26),
+                        icon: const Icon(
+                          Icons.delete_forever_rounded,
+                          color: Colors.black26,
+                        ),
                         label: const Text(
                           'ELIMINAR MI CUENTA',
-                          style: TextStyle(color: Colors.black26, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1),
+                          style: TextStyle(
+                            color: Colors.black26,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 12,
+                            letterSpacing: 1,
+                          ),
                         ),
                       ),
                     ),
@@ -486,19 +690,40 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
         children: [
           Icon(icon, size: 20, color: AppTheme.accentPurple),
           const SizedBox(width: 12),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 2)),
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
+              letterSpacing: 2,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {TextInputType keyboardType = TextInputType.text, int maxLines = 1}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.black38, letterSpacing: 1)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 12,
+              color: Colors.black38,
+              letterSpacing: 1,
+            ),
+          ),
           const SizedBox(height: 8),
           TextFormField(
             controller: controller,
@@ -509,10 +734,17 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
               prefixIcon: Icon(icon, size: 20, color: Colors.black26),
               filled: true,
               fillColor: Colors.black.withOpacity(0.04),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
             ),
-            validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
+            validator: (value) =>
+                value == null || value.isEmpty ? 'Campo requerido' : null,
           ),
         ],
       ),

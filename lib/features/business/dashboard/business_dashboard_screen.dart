@@ -288,7 +288,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           'business_id': businessId,
           'loyalty_card_id': loyaltyCardId,
           'points_used': pointsRequired,
-          'description': business?['reward_description'] ?? 'Premio',
+          'description': business?['reward_long_description'] ?? 'Premio',
           'earned_at': DateTime.now().toIso8601String(),
           'status': 'pending',
         });
@@ -1547,6 +1547,9 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
     final rewardController = TextEditingController(
       text: _business!['reward_description'] ?? '',
     );
+    final longDescController = TextEditingController(
+      text: _business!['reward_long_description'] ?? '',
+    );
     final pointsController = TextEditingController(
       text: '${_business!['points_required']}',
     );
@@ -1572,6 +1575,16 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
               ),
               const SizedBox(height: 24),
               TextField(
+                controller: longDescController,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'DESCRIPCIÓN DEL PREMIO',
+                  hintText:
+                      'Ej: Vaso de helado de cualquier sabor, tamaño mediano',
+                ),
+              ),
+              const SizedBox(height: 24),
+              TextField(
                 controller: pointsController,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
@@ -1586,6 +1599,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
               child: ElevatedButton(
                 onPressed: () async {
                   final newDesc = rewardController.text.trim().toUpperCase();
+                  final newLongDesc = longDescController.text.trim();
                   final newPoints =
                       int.tryParse(pointsController.text.trim()) ?? 10;
                   if (newDesc.isEmpty || newPoints < 1) return;
@@ -1594,6 +1608,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                         .from('businesses')
                         .update({
                           'reward_description': newDesc,
+                          'reward_long_description': newLongDesc,
                           'points_required': newPoints,
                         })
                         .eq('id', _business!['id']);
